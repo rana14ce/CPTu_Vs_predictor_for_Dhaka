@@ -69,8 +69,7 @@ with tab1:
 # ==========================================
 with tab2:
     st.header("Batch Prediction via CSV")
-    st.write(
-        "Upload a CSV file containing your CPTu data. Ensure the 4 input columns match the order used during training.")
+    st.write("Upload a CSV file containing your CPTu data. Map your columns to the required inputs.")
 
     uploaded_file = st.file_uploader("Upload CSV", type=["csv"])
 
@@ -80,19 +79,39 @@ with tab2:
         st.dataframe(df.head())
 
         st.subheader("Map Your Columns")
-        input_cols = st.multiselect("Select the 4 input feature columns:", options=df.columns.tolist(),
-                                    max_selections=4)
+        st.write("Match your CSV columns to the model's exact feature order:")
 
-        if len(input_cols) == 4:
-            X_batch = df[input_cols]
-            X_batch_scaled = scaler.transform(X_batch)
+        # Create 4 specific dropdowns to ensure exact ordering
+        colA, colB = st.columns(2)
+        options = ["<Select>"] + df.columns.tolist()
 
+        with colA:
+            col_feat1 = st.selectbox("Select Feature 1 (Originally Column B)", options)
+            col_feat2 = st.selectbox("Select Feature 2 (Originally Column D)", options)
+        with colB:
+            col_feat3 = st.selectbox("Select Feature 3 (Originally Column E)", options)
+            col_feat4 = st.selectbox("Select Feature 4 (Originally Column F)", options)
+
+        # Only proceed if all 4 dropdowns have been mapped by the user
+        if "<Select>" not in [col_feat1, col_feat2, col_feat3, col_feat4]:
+
+            # 1. Grab exactly the columns selected, in the exact order needed
+            selected_cols = [col_feat1, col_feat2, col_feat3, col_feat4]
+
+            # 2. Extract ONLY the numbers using .values. This strips the header names away!
+            X_batch_values = df[selected_cols].values
+
+            # 3. Scale and Predict
+            X_batch_scaled = scaler.transform(X_batch_values)
             predictions = model.predict(X_batch_scaled)
+
+            # 4. Add predictions back to the dataframe
             df['Predicted_Vs'] = predictions
 
             st.success("Batch Prediction Complete!")
-            st.dataframe(df[[*input_cols, 'Predicted_Vs']])
+            st.dataframe(df[[*selected_cols, 'Predicted_Vs']])
 
+            # --- Accuracy Evaluation ---
             st.divider()
             st.subheader("Evaluate Model Accuracy")
             st.write(
@@ -103,6 +122,7 @@ with tab2:
             if target_col != "<None>":
                 y_true = df[target_col]
 
+                # Calculate metrics
                 rmse = np.sqrt(mean_squared_error(y_true, predictions))
                 mae = mean_absolute_error(y_true, predictions)
                 r2 = r2_score(y_true, predictions)
@@ -113,6 +133,7 @@ with tab2:
                 m2.metric("MAE", f"{mae:.4f}")
                 m3.metric("R² Score", f"{r2:.4f}")
 
+                # Generate Hexbin Plot
                 fig, ax = plt.subplots(figsize=(7, 5))
                 hb = ax.hexbin(y_true, predictions, gridsize=40, cmap='viridis', mincnt=1)
                 cb = plt.colorbar(hb, ax=ax)
