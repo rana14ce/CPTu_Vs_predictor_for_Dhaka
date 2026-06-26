@@ -71,7 +71,7 @@ with tab1:
 # ==========================================
 with tab2:
     st.header("Batch Prediction via CSV")
-    st.write("Upload a CSV file containing your CPTu data. Map your columns to the required inputs.")
+    st.write("Upload a CSV file containing your CPTu data. Map your columns to the required inputs. The dataset shall consist of Depth in meters, qt in kPa, fs in kPa, and u2 in kPa, with Vs expressed in m/s.")
 
     uploaded_file = st.file_uploader("Upload CSV", type=["csv"])
 
@@ -81,7 +81,7 @@ with tab2:
         st.dataframe(df.head())
 
         st.subheader("Map Your Columns")
-        st.write("Match your CSV columns to the model's exact feature order: The dataset shall consist of Depth in meters, qt in kPa, fs in kPa, and u2 in kPa, with Vs expressed in m/s.")
+        st.write("Match your CSV columns to the model's exact feature order.")
 
         # Create 4 specific dropdowns to ensure exact ordering
         colA, colB = st.columns(2)
