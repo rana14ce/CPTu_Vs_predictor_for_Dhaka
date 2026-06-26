@@ -14,9 +14,10 @@ MODEL_TXT_PATH = "LightGBM_Augmented-Linear_4F.txt"
 SCALER_PATH = "Scaler_LightGBM_Augmented-Linear_4F.joblib"
 
 # --- Page Setup ---
-st.set_page_config(page_title="CPTu to Vs Predictor", layout="wide")
-st.title("Geotechnical Predictor: CPTu to Vs")
-
+st.set_page_config(page_title="CPTu to Vs Predictor for Dhaka", layout="wide")
+st.title("Geotechnical Predictor for Dhaka Soil: CPTu to Vs")
+st.write("Paper: Advanced Predictive Modeling of Shear Wave Velocity of Dhaka Soils from High-Resolution CPTu data using Advanced Algorithms")
+st.write("Model: LightGBM_Augmented Linear_4F")
 
 # --- Load Model & Scaler ---
 @st.cache_resource
@@ -50,11 +51,11 @@ with tab1:
 
     col1, col2 = st.columns(2)
     with col1:
-        feat1 = st.number_input("Input Feature 1 (Column B)", value=0.0, format="%.4f")
-        feat2 = st.number_input("Input Feature 2 (Column D)", value=0.0, format="%.4f")
+        feat1 = st.number_input("Input Feature 1 (Depth, m)", value=0.0, format="%.4f")
+        feat2 = st.number_input("Input Feature 2 (fs, kPa)", value=0.0, format="%.4f")
     with col2:
-        feat3 = st.number_input("Input Feature 3 (Column E)", value=0.0, format="%.4f")
-        feat4 = st.number_input("Input Feature 4 (Column F)", value=0.0, format="%.4f")
+        feat3 = st.number_input("Input Feature 3 (u2, Kpa)", value=0.0, format="%.4f")
+        feat4 = st.number_input("Input Feature 4 (qt, kPa)", value=0.0, format="%.4f")
 
     if st.button("Predict Vs", type="primary"):
         input_data = np.array([[feat1, feat2, feat3, feat4]])
@@ -79,18 +80,18 @@ with tab2:
         st.dataframe(df.head())
 
         st.subheader("Map Your Columns")
-        st.write("Match your CSV columns to the model's exact feature order:")
+        st.write("Match your CSV columns to the model's exact feature order: The dataset shall consist of Depth in meters, qt in kPa, fs in kPa, and u2 in kPa, with Vs expressed in m/s.")
 
         # Create 4 specific dropdowns to ensure exact ordering
         colA, colB = st.columns(2)
         options = ["<Select>"] + df.columns.tolist()
 
         with colA:
-            col_feat1 = st.selectbox("Select Feature 1 (Originally Column B)", options)
-            col_feat2 = st.selectbox("Select Feature 2 (Originally Column D)", options)
+            col_feat1 = st.selectbox("Select Feature 1 (Depth, m)", options)
+            col_feat2 = st.selectbox("Select Feature 2 (fs, kPa)", options)
         with colB:
-            col_feat3 = st.selectbox("Select Feature 3 (Originally Column E)", options)
-            col_feat4 = st.selectbox("Select Feature 4 (Originally Column F)", options)
+            col_feat3 = st.selectbox("Select Feature 3 (u2, Kpa)", options)
+            col_feat4 = st.selectbox("Select Feature 4 (qt, kPa)", options)
 
         # Only proceed if all 4 dropdowns have been mapped by the user
         if "<Select>" not in [col_feat1, col_feat2, col_feat3, col_feat4]:
@@ -126,27 +127,47 @@ with tab2:
                 rmse = np.sqrt(mean_squared_error(y_true, predictions))
                 mae = mean_absolute_error(y_true, predictions)
                 r2 = r2_score(y_true, predictions)
+                # Calculate VAF
+                vaf = (1 - (np.var(y_true - predictions) / np.var(y_true))) * 100
 
+                # Display metrics above the chart (Optional, but good for UI)
                 st.write("**Evaluation Metrics:**")
-                m1, m2, m3 = st.columns(3)
-                m1.metric("RMSE", f"{rmse:.4f}")
-                m2.metric("MAE", f"{mae:.4f}")
-                m3.metric("R² Score", f"{r2:.4f}")
+                m1, m2, m3, m4 = st.columns(4)
+                m1.metric("R² Score", f"{r2:.4f}")
+                m2.metric("RMSE", f"{rmse:.4f}")
+                m3.metric("MAE", f"{mae:.4f}")
+                m4.metric("VAF", f"{vaf:.2f}%")
 
                 # Generate Hexbin Plot
                 fig, ax = plt.subplots(figsize=(7, 5))
                 hb = ax.hexbin(y_true, predictions, gridsize=40, cmap='viridis', mincnt=1)
                 cb = plt.colorbar(hb, ax=ax)
-                cb.set_label('Count')
+                cb.set_label('Count of Data Points')
 
                 min_val = min(y_true.min(), predictions.min())
                 max_val = max(y_true.max(), predictions.max())
                 ax.plot([min_val, max_val], [min_val, max_val], 'r--', lw=2, label='1:1 Ideal Fit')
 
+                # --- NEW: Add the Metrics Text Box to the Plot ---
+                metrics_text = (f"R² = {r2:.4f}\n"
+                                f"RMSE = {rmse:.4f}\n"
+                                f"MAE = {mae:.4f}\n"
+                                f"VAF = {vaf:.2f}%")
+
+                # Create a semi-transparent white box for readability
+                props = dict(boxstyle='round', facecolor='white', alpha=0.85, edgecolor='gray')
+
+                # Place text at 5% on the X axis, 95% on the Y axis (Top Left)
+                ax.text(0.05, 0.95, metrics_text, transform=ax.transAxes, fontsize=10,
+                        verticalalignment='top', bbox=props)
+                # ------------------------------------------------
+
                 ax.set_title('Predicted vs. Measured Vs')
-                ax.set_xlabel('Measured Vs')
-                ax.set_ylabel('Predicted Vs')
-                ax.legend()
+                ax.set_xlabel('Measured Vs (m/s)')
+                ax.set_ylabel('Predicted Vs (m/s)')
+
+                # Move legend to the lower right so it doesn't overlap the new text box
+                ax.legend(loc='lower right')
                 ax.grid(True, linestyle='--', alpha=0.3)
 
                 st.pyplot(fig)
