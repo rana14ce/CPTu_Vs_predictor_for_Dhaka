@@ -16,7 +16,7 @@ SCALER_PATH = "Scaler_LightGBM_Augmented-Linear_4F.joblib"
 # --- Page Setup ---
 st.set_page_config(page_title="CPTu to Vs Predictor for Dhaka", layout="wide")
 
-st.title("Advanced Predictive Modeling of Shear Wave Velocity of Dhaka Soils from High-Resolution CPTu data using Advanced Algorithms")
+st.title("Advanced Predictive Modeling of Shear Wave Velocity of Dhaka Soils from High-Resolution CPTu Data")
 st.write("Geotechnical Predictor for Dhaka Soil: CPTu to Vs")
 st.write("Model: LightGBM_Augmented Linear_4F")
 
