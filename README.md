@@ -1,3 +1,3 @@
-# CPTu_Vs_predictor_for_Dhaka
-Machine learning tool to predict Vs from CPTu data using LGBM-AL-4F for Dhaka. 
+# Vs predictor from CPTu for Dhaka Soil
+Machine learning tool to predict Vs from CPTu data using LGBM-AL-4F for Dhaka soil. 
 Please visit the link to use https://cptuvs.streamlit.app/
